@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react';
-import { useGetAccessToken, useCurrentUser } from '@coinbase/cdp-hooks';
-import { SendEvmTransactionButton } from '@coinbase/cdp-react';
-import { authService } from '../services/authService';
+import { useCurrentUser, useSendUserOperation } from '@coinbase/cdp-hooks';
+import { encodeFunctionData } from 'viem';
 import { Button } from './ui/Button';
 import { Loader2, Check, ExternalLink } from 'lucide-react';
 import './SendTransactionModal.css';
@@ -15,143 +14,122 @@ interface SendTransactionModalProps {
 // USDC contract address on Base Sepolia (Testnet)
 const USDC_ADDRESS = '0x036CbD53842c5426634e7929541eC2318f3dCF7e';
 const USDC_DECIMALS = 6;
-const BASE_SEPOLIA_CHAIN_ID = 84532;
+
+// ERC20 ABI for transfer function
+const erc20Abi = [
+  {
+    type: 'function',
+    name: 'transfer',
+    stateMutability: 'nonpayable',
+    inputs: [
+      { name: 'to', type: 'address' },
+      { name: 'value', type: 'uint256' },
+    ],
+    outputs: [{ type: 'bool' }],
+  },
+] as const;
 
 function SendTransactionModal({ isOpen, onClose, onSuccess }: SendTransactionModalProps) {
-  const { getAccessToken } = useGetAccessToken();
   const { currentUser } = useCurrentUser();
+  const { sendUserOperation, status, data, error } = useSendUserOperation();
+
   const [recipientAddress, setRecipientAddress] = useState<string>('');
   const [amount, setAmount] = useState<string>('');
-  const [error, setError] = useState<string | null>(null);
-  const [validating, setValidating] = useState(false);
-  const [validated, setValidated] = useState(false);
-  const [validationData, setValidationData] = useState<any>(null);
-  const [transaction, setTransaction] = useState<any>(null);
-  const [success, setSuccess] = useState(false);
-  const [transactionHash, setTransactionHash] = useState<string>('');
+  const [formError, setFormError] = useState<string | null>(null);
 
-  // Use regular EVM account (EOA), NOT smart account
-  // SendEvmTransactionButton requires EOA for signing
-  const evmAddress = currentUser?.evmAccounts?.[0];
+  // Use Smart Account for gasless transactions
+  const smartAccount = currentUser?.evmSmartAccounts?.[0];
 
-  // Reset state when modal closes
+  // Reset form when modal closes
   useEffect(() => {
     if (!isOpen) {
       setRecipientAddress('');
       setAmount('');
-      setError(null);
-      setValidating(false);
-      setValidated(false);
-      setValidationData(null);
-      setTransaction(null);
-      setSuccess(false);
-      setTransactionHash('');
+      setFormError(null);
     }
   }, [isOpen]);
 
-  const handleValidate = async (e: React.FormEvent) => {
+  // Handle success - Log transaction details
+  useEffect(() => {
+    if (status === 'success' && data?.transactionHash) {
+      const explorerUrl = `https://sepolia.basescan.org/tx/${data.transactionHash}`;
+
+      console.log('[SEND-USDC] ================================');
+      console.log('[SEND-USDC] Transaction Successful!');
+      console.log('[SEND-USDC] Transaction Hash:', data.transactionHash);
+      console.log('[SEND-USDC] Explorer URL:', explorerUrl);
+      console.log('[SEND-USDC] ================================');
+
+      // Call success callback but don't auto-close
+      if (onSuccess) onSuccess();
+    }
+  }, [status, data, onSuccess]);
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
     // Validation
     if (!recipientAddress || !recipientAddress.startsWith('0x') || recipientAddress.length !== 42) {
-      setError('Please enter a valid Ethereum address (0x...)');
+      setFormError('Please enter a valid Ethereum address (0x...)');
       return;
     }
 
     const amountNum = parseFloat(amount);
     if (isNaN(amountNum) || amountNum <= 0) {
-      setError('Please enter a valid amount greater than 0');
+      setFormError('Please enter a valid amount greater than 0');
       return;
     }
 
-    if (!evmAddress) {
-      setError('Wallet account not found. Please try logging in again.');
+    if (!smartAccount) {
+      setFormError('Smart account not found. Please try logging in again.');
       return;
     }
 
-    setError(null);
-    setValidating(true);
+    setFormError(null);
 
     try {
-      // Get Coinbase access token
-      const coinbaseAccessToken = await getAccessToken();
-      if (!coinbaseAccessToken) {
-        throw new Error('Failed to get Coinbase access token');
-      }
+      console.log('[SEND-USDC] Preparing transaction...');
+      console.log('[SEND-USDC] Smart Account:', smartAccount);
+      console.log('[SEND-USDC] To:', recipientAddress);
+      console.log('[SEND-USDC] Amount:', amountNum, 'USDC');
 
-      console.log('[SEND-USDC] Step 1: Validating transaction with backend');
+      // Convert amount to smallest unit (USDC has 6 decimals)
+      const amountInSmallestUnit = BigInt(Math.floor(amountNum * Math.pow(10, USDC_DECIMALS)));
 
-      // Validate transaction with backend
-      const validationResult = await authService.sendUSDC({
-        accessToken: coinbaseAccessToken,
-        destinationAddress: recipientAddress,
-        amount: amountNum,
+      // Encode ERC20 transfer function call using viem
+      const transferData = encodeFunctionData({
+        abi: erc20Abi,
+        functionName: 'transfer',
+        args: [recipientAddress as `0x${string}`, amountInSmallestUnit],
       });
 
-      console.log('[SEND-USDC] Step 2: Validation successful:', validationResult);
+      console.log('[SEND-USDC] Transfer data:', transferData);
+      console.log('[SEND-USDC] Amount in smallest unit:', amountInSmallestUnit.toString());
 
-      if (!validationResult.data) {
-        throw new Error('Invalid validation response from backend');
-      }
+      // Send user operation via Smart Account (gasless with CDP Paymaster)
+      await sendUserOperation({
+        evmSmartAccount: smartAccount,
+        network: 'base-sepolia',
+        calls: [
+          {
+            to: USDC_ADDRESS as `0x${string}`,
+            value: 0n,
+            data: transferData,
+          },
+        ],
+        useCdpPaymaster: true, // Enable gasless transactions on Base
+      });
 
-      setValidationData(validationResult.data);
-
-      // Build ERC20 transfer transaction
-      const amountInSmallestUnit = BigInt(Math.floor(amountNum * Math.pow(10, USDC_DECIMALS)));
-      const transferFunctionSignature = '0xa9059cbb';
-      const paddedRecipient = recipientAddress.slice(2).padStart(64, '0');
-      const paddedAmount = amountInSmallestUnit.toString(16).padStart(64, '0');
-      const data = `${transferFunctionSignature}${paddedRecipient}${paddedAmount}` as `0x${string}`;
-
-      const tx = {
-        to: USDC_ADDRESS as `0x${string}`,
-        value: 0n,
-        data: data,
-        chainId: BASE_SEPOLIA_CHAIN_ID,
-        type: 'eip1559' as const,
-      };
-
-      console.log('[SEND-USDC] Step 3: Transaction prepared:', tx);
-
-      setTransaction(tx);
-      setValidated(true);
+      console.log('[SEND-USDC] User operation submitted');
 
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Failed to validate transaction';
-      console.error('[SEND-USDC] Validation error:', err);
-      setError(errorMessage);
-    } finally {
-      setValidating(false);
+      console.error('[SEND-USDC] Transaction error:', err);
+      setFormError(err instanceof Error ? err.message : 'Failed to send USDC');
     }
-  };
-
-  const handleTransactionSuccess = (txHash: string) => {
-    console.log('[SEND-USDC] Transaction successful! Hash:', txHash);
-    setTransactionHash(txHash);
-    setSuccess(true);
-
-    // Auto close after 5 seconds
-    setTimeout(() => {
-      handleClose();
-      if (onSuccess) onSuccess();
-    }, 5000);
-  };
-
-  const handleTransactionError = (err: Error) => {
-    console.error('[SEND-USDC] Transaction error:', err);
-    setError(err.message || 'Failed to send transaction');
-    setValidated(false);
-    setTransaction(null);
   };
 
   const handleClose = () => {
     onClose();
-  };
-
-  const handleBack = () => {
-    setValidated(false);
-    setTransaction(null);
-    setError(null);
   };
 
   const getExplorerUrl = (hash: string) => {
@@ -159,6 +137,10 @@ function SendTransactionModal({ isOpen, onClose, onSuccess }: SendTransactionMod
   };
 
   if (!isOpen) return null;
+
+  const isPending = status === 'pending';
+  const isSuccess = status === 'success';
+  const hasError = status === 'error' || formError;
 
   return (
     <div className="send-modal-overlay" onClick={handleClose}>
@@ -168,109 +150,133 @@ function SendTransactionModal({ isOpen, onClose, onSuccess }: SendTransactionMod
           <button className="close-btn" onClick={handleClose}>×</button>
         </div>
 
-        {success ? (
-          <div className="send-form" style={{ textAlign: 'center' }}>
+        {isSuccess && data?.transactionHash ? (
+          <div className="send-form">
             <div style={{
               background: 'rgba(34, 197, 94, 0.1)',
               border: '1px solid rgba(34, 197, 94, 0.2)',
               borderRadius: '1rem',
               padding: '2rem',
-              marginBottom: '1.5rem'
+              marginBottom: '1.5rem',
+              textAlign: 'center'
             }}>
               <Check size={64} style={{ color: '#22c55e', margin: '0 auto 1rem' }} />
               <h3 style={{ color: '#22c55e', marginBottom: '0.5rem', fontSize: '1.5rem' }}>
                 Transaction Sent!
               </h3>
-              <p style={{ color: 'var(--text-secondary)', fontSize: '0.875rem' }}>
+              <p style={{ color: 'var(--text-secondary)', fontSize: '0.875rem', marginBottom: 0 }}>
                 Your USDC transfer has been submitted
               </p>
             </div>
 
-            {transactionHash && (
-              <a
-                href={getExplorerUrl(transactionHash)}
-                target="_blank"
-                rel="noopener noreferrer"
-                style={{
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: '0.5rem',
-                  color: 'var(--primary)',
-                  textDecoration: 'none',
-                  fontSize: '0.875rem',
-                  marginBottom: '1rem'
-                }}
-              >
-                View on Base Sepolia Explorer <ExternalLink size={16} />
-              </a>
-            )}
-
-            <p style={{ color: 'var(--text-secondary)', fontSize: '0.875rem' }}>
-              Closing automatically...
-            </p>
-          </div>
-        ) : validated && transaction && evmAddress ? (
-          <div className="send-form">
             <div style={{
-              background: 'rgba(59, 130, 246, 0.1)',
-              border: '1px solid rgba(59, 130, 246, 0.2)',
+              background: 'rgba(249, 250, 251, 1)',
+              border: '1px solid rgba(229, 231, 235, 1)',
               borderRadius: '0.75rem',
               padding: '1.5rem',
               marginBottom: '1.5rem'
             }}>
-              <h3 style={{ fontSize: '1rem', marginBottom: '1rem', color: 'var(--text-primary)' }}>
-                Confirm Transaction
-              </h3>
-              <div style={{ fontSize: '0.875rem', color: 'var(--text-secondary)' }}>
-                <p style={{ marginBottom: '0.5rem' }}>
-                  <strong>From:</strong> {evmAddress.slice(0, 10)}...{evmAddress.slice(-8)}
-                </p>
-                <p style={{ marginBottom: '0.5rem' }}>
-                  <strong>To:</strong> {recipientAddress.slice(0, 10)}...{recipientAddress.slice(-8)}
-                </p>
-                <p style={{ marginBottom: '0.5rem' }}>
-                  <strong>Amount:</strong> {amount} USDC
-                </p>
-                <p style={{ marginBottom: '0.5rem' }}>
-                  <strong>Network:</strong> Base Sepolia (Testnet)
-                </p>
+              <h4 style={{ fontSize: '0.875rem', fontWeight: 600, marginBottom: '1rem', color: 'var(--text-primary)' }}>
+                Transaction Details
+              </h4>
+
+              <div style={{ marginBottom: '1rem' }}>
+                <label style={{
+                  display: 'block',
+                  fontSize: '0.75rem',
+                  color: 'var(--text-secondary)',
+                  marginBottom: '0.25rem',
+                  fontWeight: 500
+                }}>
+                  Transaction Hash
+                </label>
+                <div style={{
+                  background: 'white',
+                  border: '1px solid rgba(229, 231, 235, 1)',
+                  borderRadius: '0.5rem',
+                  padding: '0.75rem',
+                  fontSize: '0.75rem',
+                  fontFamily: 'monospace',
+                  wordBreak: 'break-all',
+                  color: 'var(--text-primary)'
+                }}>
+                  {data.transactionHash}
+                </div>
+              </div>
+
+              <div style={{ marginBottom: '1rem' }}>
+                <label style={{
+                  display: 'block',
+                  fontSize: '0.75rem',
+                  color: 'var(--text-secondary)',
+                  marginBottom: '0.25rem',
+                  fontWeight: 500
+                }}>
+                  Block Explorer
+                </label>
+                <a
+                  href={getExplorerUrl(data.transactionHash)}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '0.5rem',
+                    color: 'var(--primary)',
+                    textDecoration: 'none',
+                    fontSize: '0.875rem',
+                    padding: '0.5rem 1rem',
+                    background: 'rgba(59, 130, 246, 0.1)',
+                    border: '1px solid rgba(59, 130, 246, 0.2)',
+                    borderRadius: '0.5rem',
+                    fontWeight: 500
+                  }}
+                >
+                  View on BaseScan <ExternalLink size={14} />
+                </a>
+              </div>
+
+              <div style={{
+                padding: '0.75rem',
+                background: 'rgba(59, 130, 246, 0.05)',
+                borderRadius: '0.5rem',
+                fontSize: '0.75rem',
+                color: 'var(--text-secondary)'
+              }}>
+                💡 Tip: You can check the transaction status on the block explorer
               </div>
             </div>
 
-            {error && (
-              <div className="error-message" style={{ marginBottom: '1rem' }}>
-                <span>❌</span> {error}
-              </div>
-            )}
-
-            <div className="form-actions">
-              <Button
-                type="button"
-                onClick={handleBack}
-                variant="ghost"
-              >
-                Back
-              </Button>
-
-              <SendEvmTransactionButton
-                account={evmAddress}
-                network="base-sepolia"
-                transaction={transaction}
-                onSuccess={handleTransactionSuccess}
-                onError={handleTransactionError}
-                pendingLabel="Sending..."
-              >
-                Confirm & Send
-              </SendEvmTransactionButton>
-            </div>
-
-            <div className="send-info">
-              <p>⚠️ Please review the details carefully before confirming</p>
-              <p>🔐 Your transaction will be signed securely by Coinbase</p>
-            </div>
+            <Button
+              type="button"
+              onClick={handleClose}
+              variant="primary"
+              style={{ width: '100%' }}
+            >
+              Close
+            </Button>
           </div>
         ) : (
-          <form onSubmit={handleValidate} className="send-form">
+          <form onSubmit={handleSubmit} className="send-form">
+            <div style={{
+              background: 'rgba(59, 130, 246, 0.1)',
+              border: '1px solid rgba(59, 130, 246, 0.2)',
+              borderRadius: '0.75rem',
+              padding: '1rem',
+              marginBottom: '1.5rem',
+              fontSize: '0.875rem',
+              color: 'var(--text-secondary)'
+            }}>
+              <p style={{ margin: 0 }}>
+                🎁 <strong>Gasless Transaction</strong> - No ETH needed for gas fees!
+              </p>
+              {smartAccount && (
+                <p style={{ margin: '0.5rem 0 0 0', fontSize: '0.75rem' }}>
+                  Using Smart Account: {smartAccount.slice(0, 10)}...{smartAccount.slice(-8)}
+                </p>
+              )}
+            </div>
+
             <div className="form-group">
               <label htmlFor="recipient">Recipient Address</label>
               <input
@@ -279,7 +285,7 @@ function SendTransactionModal({ isOpen, onClose, onSuccess }: SendTransactionMod
                 value={recipientAddress}
                 onChange={(e) => setRecipientAddress(e.target.value)}
                 placeholder="0x..."
-                disabled={validating}
+                disabled={isPending}
                 className="address-input"
                 autoFocus
               />
@@ -295,14 +301,32 @@ function SendTransactionModal({ isOpen, onClose, onSuccess }: SendTransactionMod
                 value={amount}
                 onChange={(e) => setAmount(e.target.value)}
                 placeholder="0.00"
-                disabled={validating}
+                disabled={isPending}
                 className="amount-input"
               />
             </div>
 
-            {error && (
+            {isPending && (
+              <div style={{
+                background: 'rgba(59, 130, 246, 0.1)',
+                border: '1px solid rgba(59, 130, 246, 0.2)',
+                borderRadius: '0.5rem',
+                padding: '0.75rem',
+                marginBottom: '1rem',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.5rem',
+                fontSize: '0.875rem',
+                color: 'var(--text-primary)'
+              }}>
+                <Loader2 size={16} className="animate-spin" />
+                <span>Processing transaction...</span>
+              </div>
+            )}
+
+            {hasError && (
               <div className="error-message">
-                <span>❌</span> {error}
+                <span>❌</span> {formError || error?.message || 'Transaction failed'}
               </div>
             )}
 
@@ -311,22 +335,22 @@ function SendTransactionModal({ isOpen, onClose, onSuccess }: SendTransactionMod
                 type="button"
                 onClick={handleClose}
                 variant="ghost"
-                disabled={validating}
+                disabled={isPending}
               >
                 Cancel
               </Button>
               <Button
                 type="submit"
                 variant="primary"
-                disabled={validating}
+                disabled={isPending || !smartAccount}
               >
-                {validating ? (
+                {isPending ? (
                   <>
                     <Loader2 size={16} className="animate-spin" />
-                    Validating...
+                    Sending...
                   </>
                 ) : (
-                  'Continue'
+                  'Send USDC'
                 )}
               </Button>
             </div>
@@ -335,6 +359,7 @@ function SendTransactionModal({ isOpen, onClose, onSuccess }: SendTransactionMod
               <p>💰 Currency: USDC only</p>
               <p>🌐 Network: Base Sepolia (Testnet)</p>
               <p>⚠️ Please verify the recipient address carefully</p>
+              <p>🔐 Powered by Coinbase Smart Account</p>
             </div>
           </form>
         )}

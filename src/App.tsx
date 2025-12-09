@@ -9,7 +9,7 @@ const config: Config = {
   ethereum: {
     createOnLogin: "smart",
   },
-  appName: "Melee Fantasy Sports",
+  appName: "Coinbase Embedded Wallet Auth",
   appLogoUrl: "",
   authMethods: ["email"],
   showCoinbaseFooter: true,
@@ -39,9 +39,6 @@ function App() {
       <Background>
         <div className="app-container">
           <header className="app-header">
-            <h1 className="app-title">
-              Melee Fantasy Sports
-            </h1>
             <p className="app-subtitle">
               Coinbase Embedded Wallet Authentication
             </p>
