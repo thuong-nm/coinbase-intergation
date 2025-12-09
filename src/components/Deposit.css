@@ -1,0 +1,234 @@
+.deposit-container {
+  display: flex;
+  justify-content: center;
+  width: 100%;
+}
+
+.deposit-card {
+  width: 100%;
+  border-radius: 16px;
+  background: var(--glass-bg);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid var(--glass-border);
+  box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
+  padding: 1.5rem;
+  color: #fff;
+}
+
+.deposit-card h2 {
+  font-size: 1.5rem;
+  font-weight: 700;
+  margin-bottom: 0.5rem;
+  text-align: center;
+}
+
+.deposit-description {
+  text-align: center;
+  color: var(--text-secondary);
+  margin-bottom: 1.5rem;
+}
+
+.deposit-settings {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.form-group label {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--text-secondary);
+}
+
+.select-input {
+  width: 100%;
+  background: rgba(0, 0, 0, 0.5);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 0.5rem;
+  padding: 0.75rem 1rem;
+  color: white;
+  font-family: var(--font-sans);
+  font-size: 1rem;
+}
+
+.select-input:focus {
+  outline: none;
+  border-color: var(--primary);
+}
+
+.loading-state {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  padding: 1.5rem;
+  color: var(--primary);
+}
+
+.spinner {
+  width: 20px;
+  height: 20px;
+  border: 2px solid rgba(0, 243, 255, 0.3);
+  border-top-color: var(--primary);
+  border-radius: 50%;
+  animation: spin-slow 1s linear infinite;
+}
+
+.error-state {
+  background: rgba(239, 68, 68, 0.1);
+  border: 1px solid rgba(239, 68, 68, 0.2);
+  border-radius: 0.75rem;
+  padding: 1rem;
+  color: #f87171;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 1.5rem;
+}
+
+.deposit-info {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.address-section {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.address-section label {
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+}
+
+.address-display {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: rgba(255, 255, 255, 0.05);
+  padding: 0.75rem 1rem;
+  border-radius: 0.75rem;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.address-text {
+  font-family: monospace;
+  font-size: 0.875rem;
+  word-break: break-all;
+}
+
+.copy-btn {
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  font-size: 1.25rem;
+  padding: 0.25rem;
+  margin-left: 0.5rem;
+  transition: transform 0.2s;
+}
+
+.copy-btn.copied {
+  color: #4ade80;
+}
+
+.copy-feedback {
+  font-size: 0.75rem;
+  color: #4ade80;
+  text-align: right;
+}
+
+.qr-section {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+}
+
+.qr-code {
+  background: white;
+  padding: 1rem;
+  border-radius: 1rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.qr-code img {
+  max-width: 100%;
+  height: auto;
+}
+
+.qr-caption {
+  color: #000;
+  font-weight: 500;
+  font-size: 0.875rem;
+}
+
+.warning-box {
+  background: rgba(255, 165, 0, 0.1);
+  border: 1px solid rgba(255, 165, 0, 0.2);
+  border-radius: 0.75rem;
+  padding: 1rem;
+}
+
+.warning-box h4 {
+  color: #fbbf24;
+  margin-bottom: 0.5rem;
+  font-size: 1rem;
+}
+
+.warning-box ul {
+  padding-left: 1.5rem;
+  margin: 0;
+  color: #d1d5db;
+  font-size: 0.875rem;
+}
+
+.warning-box li {
+  margin-bottom: 0.25rem;
+}
+
+.network-info {
+  display: flex;
+  justify-content: center;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.info-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.info-label {
+  color: var(--text-secondary);
+  font-size: 0.875rem;
+}
+
+.info-value.badge {
+  background: rgba(255, 255, 255, 0.1);
+  padding: 0.25rem 0.5rem;
+  border-radius: 0.25rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.deposit-actions {
+  margin-top: 1.5rem;
+  display: flex;
+  justify-content: center;
+}

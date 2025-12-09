@@ -1,0 +1,26 @@
+.card {
+    border-radius: 16px;
+    transition: all 0.3s ease;
+    background: var(--glass-bg);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid var(--glass-border);
+    box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
+}
+
+.card-default {
+    /* Default styles handled by base .card */
+}
+
+.card-default:hover {
+    border-color: rgba(0, 243, 255, 0.3);
+}
+
+.card-neon {
+    border-color: rgba(0, 243, 255, 0.5);
+    box-shadow: 0 0 15px rgba(0, 243, 255, 0.2);
+}
+
+.card-neon:hover {
+    box-shadow: 0 0 25px rgba(0, 243, 255, 0.4);
+}

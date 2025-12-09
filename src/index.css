@@ -1,0 +1,121 @@
+@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;700&family=Rethink+Sans:ital,wght@0,400;0,500;0,700;1,400&display=swap');
+
+:root {
+  /* Colors */
+  --bg-default: #000000;
+  /* Pure Black */
+  --bg-surface: #111111;
+  /* Dark Gray */
+  --primary: #FF5F00;
+  /* Vibrant Orange */
+  --secondary: #FF9500;
+  /* Lighter Orange / Gold */
+  --accent: #FFFFFF;
+  /* White Accent */
+
+  --glass-bg: rgba(20, 20, 20, 0.8);
+  --glass-border: rgba(255, 95, 0, 0.2);
+
+  --text-primary: #ffffff;
+  --text-secondary: #94a3b8;
+  --text-muted: #64748b;
+
+  /* Fonts */
+  --font-sans: 'Orbitron', sans-serif;
+  --font-tech: 'Orbitron', sans-serif;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  background-color: var(--bg-default);
+  color: var(--text-primary);
+  font-family: var(--font-sans);
+  min-height: 100vh;
+  overflow-x: hidden;
+  background-image:
+    radial-gradient(circle at 50% 0%, rgba(255, 95, 0, 0.2) 0%, transparent 60%),
+    radial-gradient(circle at 80% 50%, rgba(255, 95, 0, 0.05) 0%, transparent 40%);
+}
+
+@keyframes pulse-glow {
+
+  0%,
+  100% {
+    opacity: 1;
+    text-shadow: 0 0 20px rgba(255, 95, 0, 0.5);
+  }
+
+  50% {
+    opacity: 0.8;
+    text-shadow: 0 0 40px rgba(255, 149, 0, 0.5);
+  }
+}
+
+@keyframes float {
+
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+
+  50% {
+    transform: translateY(-20px);
+  }
+}
+
+@keyframes spin-slow {
+  from {
+    transform: rotate(0deg);
+  }
+
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Utilities */
+.glass-panel {
+  background: var(--glass-bg);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid var(--glass-border);
+  box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
+}
+
+.text-gradient {
+  background: linear-gradient(to right, var(--primary), var(--secondary), var(--primary));
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  background-size: 200% auto;
+  animation: shine 5s linear infinite;
+}
+
+@keyframes shine {
+  to {
+    background-position: 200% center;
+  }
+}
+
+/* Scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--bg-default);
+}
+
+::-webkit-scrollbar-thumb {
+  background: #1f1f3a;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--secondary);
+}
