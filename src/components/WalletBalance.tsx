@@ -22,7 +22,11 @@ interface TokenBalance {
 
 type NetworkType = 'base-sepolia' | 'base-mainnet' | 'ethereum-sepolia' | 'ethereum-mainnet';
 
-function WalletBalance() {
+interface WalletBalanceProps {
+  triggerRefresh?: number;
+}
+
+function WalletBalance({ triggerRefresh }: WalletBalanceProps) {
   const { evmAddress } = useEvmAddress();
   const [balances, setBalances] = useState<TokenBalance[]>([]);
   const [loading, setLoading] = useState(false);
@@ -133,15 +137,37 @@ function WalletBalance() {
       const allBalances = sortBalancesByValue([nativeBalance, ...tokenBalances]);
       setBalances(allBalances);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to fetch balances');
+      const errorMessage = err instanceof Error ? err.message : 'Failed to fetch balances';
+
+      // Handle rate limiting gracefully - don't show error, just keep old balances
+      if (errorMessage.includes('429') || errorMessage.includes('Too Many Requests')) {
+        console.warn('[WALLET-BALANCE] Rate limited, will retry later');
+        // Don't set error state, keep existing balances
+      } else {
+        setError(errorMessage);
+      }
     } finally {
       setLoading(false);
     }
   }, [evmAddress, network, fetchNativeBalance, fetchTokenBalances]);
 
+  // Initial fetch
   useEffect(() => {
-    if (evmAddress) fetchBalances();
+    if (!evmAddress) return;
+    fetchBalances();
   }, [evmAddress, network, fetchBalances]);
+
+  // Refresh when triggerRefresh changes
+  useEffect(() => {
+    if (!evmAddress || !triggerRefresh) return;
+
+    // Add delay to prevent rate limiting
+    const timeoutId = setTimeout(() => {
+      fetchBalances();
+    }, 1000);
+
+    return () => clearTimeout(timeoutId);
+  }, [triggerRefresh, evmAddress, fetchBalances]);
 
   const handleNetworkChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     setNetwork(e.target.value as NetworkType);
@@ -209,7 +235,16 @@ function WalletBalance() {
           {balances.map((token, index) => (
             <div key={index} className="balance-item">
               <div className="token-info">
-                <span className="token-icon">{getTokenIcon(token.symbol)}</span>
+                {token.symbol === 'USDC' ? (
+                  <img
+                    src="https://cryptologos.cc/logos/usd-coin-usdc-logo.png"
+                    alt="USDC"
+                    className="token-icon"
+                    style={{ width: 24, height: 24 }}
+                  />
+                ) : (
+                  <span className="token-icon">{getTokenIcon(token.symbol)}</span>
+                )}
                 <div className="token-details">
                   <span className="token-symbol">{token.symbol}</span>
                   <span className="token-network">{network}</span>

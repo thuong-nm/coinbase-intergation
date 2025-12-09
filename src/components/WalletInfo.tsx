@@ -23,6 +23,7 @@ function WalletInfo() {
   const [copiedAddress, setCopiedAddress] = useState(false);
   const [isDepositModalOpen, setIsDepositModalOpen] = useState(false);
   const [isSendModalOpen, setIsSendModalOpen] = useState(false);
+  const [balanceRefreshKey, setBalanceRefreshKey] = useState(0);
 
   useEffect(() => {
     const authenticate = async () => {
@@ -172,13 +173,6 @@ function WalletInfo() {
                       </div>
                     </div>
 
-                    <div className="info-row" style={{ display: 'block' }}>
-                      <span className="label" style={{ fontSize: '0.75rem', textTransform: 'uppercase', display: 'block', marginBottom: '0.25rem' }}>Role</span>
-                      <span className="badge" style={{ background: 'rgba(0, 243, 255, 0.2)', color: 'var(--primary)' }}>
-                        {backendAuth.user.role}
-                      </span>
-                    </div>
-
                     {backendAuth.user.walletProvider && (
                       <div className="info-row" style={{ display: 'block' }}>
                         <span className="label" style={{ fontSize: '0.75rem', textTransform: 'uppercase', display: 'block', marginBottom: '0.25rem' }}>Provider</span>
@@ -193,6 +187,8 @@ function WalletInfo() {
             </div>
           </div>
         </Card>
+
+        <WalletBalance triggerRefresh={balanceRefreshKey} />
 
         <div className="action-buttons">
           <Button
@@ -209,17 +205,21 @@ function WalletInfo() {
           >
             📤 Send
           </Button>
-          <Button
-            variant="secondary"
-            onClick={handleLogout}
-          >
-            Clear Session
-          </Button>
         </div>
       </div>
 
-      <WalletBalance />
       <Deposit />
+
+      {/* Sign out button at the bottom */}
+      <div style={{ marginTop: '2rem', display: 'flex', justifyContent: 'center' }}>
+        <Button
+          variant="secondary"
+          onClick={handleLogout}
+          style={{ minWidth: '200px' }}
+        >
+          🚪 Sign Out
+        </Button>
+      </div>
 
       <DepositModal
         isOpen={isDepositModalOpen}
@@ -230,8 +230,8 @@ function WalletInfo() {
         isOpen={isSendModalOpen}
         onClose={() => setIsSendModalOpen(false)}
         onSuccess={() => {
-          // Refresh balance after successful transaction
-          window.location.reload();
+          // Refresh balance after successful transaction without reloading page
+          setBalanceRefreshKey(prev => prev + 1);
         }}
       />
     </>

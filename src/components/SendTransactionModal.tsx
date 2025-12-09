@@ -146,7 +146,14 @@ function SendTransactionModal({ isOpen, onClose, onSuccess }: SendTransactionMod
     <div className="send-modal-overlay" onClick={handleClose}>
       <div className="send-modal-content" onClick={(e) => e.stopPropagation()}>
         <div className="send-modal-header">
-          <h2>Send USDC</h2>
+          <h2 style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+            <img
+              src="https://cryptologos.cc/logos/usd-coin-usdc-logo.png"
+              alt="USDC"
+              style={{ width: 24, height: 24 }}
+            />
+            Send USDC
+          </h2>
           <button className="close-btn" onClick={handleClose}>×</button>
         </div>
 
@@ -154,14 +161,30 @@ function SendTransactionModal({ isOpen, onClose, onSuccess }: SendTransactionMod
           <div className="send-form">
             <div style={{
               background: 'rgba(34, 197, 94, 0.1)',
-              border: '1px solid rgba(34, 197, 94, 0.2)',
+              border: '1px solid rgba(34, 197, 94, 0.3)',
               borderRadius: '1rem',
               padding: '2rem',
               marginBottom: '1.5rem',
               textAlign: 'center'
             }}>
-              <Check size={64} style={{ color: '#22c55e', margin: '0 auto 1rem' }} />
-              <h3 style={{ color: '#22c55e', marginBottom: '0.5rem', fontSize: '1.5rem' }}>
+              <div style={{ position: 'relative', display: 'inline-block', marginBottom: '1rem' }}>
+                <Check size={64} style={{ color: '#22c55e' }} />
+                <img
+                  src="https://cryptologos.cc/logos/usd-coin-usdc-logo.png"
+                  alt="USDC"
+                  style={{
+                    position: 'absolute',
+                    bottom: -8,
+                    right: -8,
+                    width: 32,
+                    height: 32,
+                    borderRadius: '50%',
+                    border: '2px solid rgba(0, 0, 0, 0.8)',
+                    background: 'white'
+                  }}
+                />
+              </div>
+              <h3 style={{ color: '#22c55e', marginBottom: '0.5rem', fontSize: '1.5rem', fontWeight: 700 }}>
                 Transaction Sent!
               </h3>
               <p style={{ color: 'var(--text-secondary)', fontSize: '0.875rem', marginBottom: 0 }}>
@@ -170,8 +193,8 @@ function SendTransactionModal({ isOpen, onClose, onSuccess }: SendTransactionMod
             </div>
 
             <div style={{
-              background: 'rgba(249, 250, 251, 1)',
-              border: '1px solid rgba(229, 231, 235, 1)',
+              background: 'rgba(255, 255, 255, 0.05)',
+              border: '1px solid rgba(255, 255, 255, 0.1)',
               borderRadius: '0.75rem',
               padding: '1.5rem',
               marginBottom: '1.5rem'
@@ -186,13 +209,14 @@ function SendTransactionModal({ isOpen, onClose, onSuccess }: SendTransactionMod
                   fontSize: '0.75rem',
                   color: 'var(--text-secondary)',
                   marginBottom: '0.25rem',
-                  fontWeight: 500
+                  fontWeight: 500,
+                  textTransform: 'uppercase'
                 }}>
                   Transaction Hash
                 </label>
                 <div style={{
-                  background: 'white',
-                  border: '1px solid rgba(229, 231, 235, 1)',
+                  background: 'rgba(0, 0, 0, 0.3)',
+                  border: '1px solid rgba(255, 255, 255, 0.1)',
                   borderRadius: '0.5rem',
                   padding: '0.75rem',
                   fontSize: '0.75rem',
@@ -210,7 +234,8 @@ function SendTransactionModal({ isOpen, onClose, onSuccess }: SendTransactionMod
                   fontSize: '0.75rem',
                   color: 'var(--text-secondary)',
                   marginBottom: '0.25rem',
-                  fontWeight: 500
+                  fontWeight: 500,
+                  textTransform: 'uppercase'
                 }}>
                   Block Explorer
                 </label>
@@ -226,10 +251,19 @@ function SendTransactionModal({ isOpen, onClose, onSuccess }: SendTransactionMod
                     textDecoration: 'none',
                     fontSize: '0.875rem',
                     padding: '0.5rem 1rem',
-                    background: 'rgba(59, 130, 246, 0.1)',
-                    border: '1px solid rgba(59, 130, 246, 0.2)',
+                    background: 'rgba(255, 95, 0, 0.1)',
+                    border: '1px solid rgba(255, 95, 0, 0.3)',
                     borderRadius: '0.5rem',
-                    fontWeight: 500
+                    fontWeight: 600,
+                    transition: 'all 0.2s'
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.background = 'rgba(255, 95, 0, 0.2)';
+                    e.currentTarget.style.borderColor = 'var(--primary)';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.background = 'rgba(255, 95, 0, 0.1)';
+                    e.currentTarget.style.borderColor = 'rgba(255, 95, 0, 0.3)';
                   }}
                 >
                   View on BaseScan <ExternalLink size={14} />
@@ -238,7 +272,8 @@ function SendTransactionModal({ isOpen, onClose, onSuccess }: SendTransactionMod
 
               <div style={{
                 padding: '0.75rem',
-                background: 'rgba(59, 130, 246, 0.05)',
+                background: 'rgba(255, 149, 0, 0.1)',
+                border: '1px solid rgba(255, 149, 0, 0.2)',
                 borderRadius: '0.5rem',
                 fontSize: '0.75rem',
                 color: 'var(--text-secondary)'
@@ -259,20 +294,20 @@ function SendTransactionModal({ isOpen, onClose, onSuccess }: SendTransactionMod
         ) : (
           <form onSubmit={handleSubmit} className="send-form">
             <div style={{
-              background: 'rgba(59, 130, 246, 0.1)',
-              border: '1px solid rgba(59, 130, 246, 0.2)',
+              background: 'rgba(255, 95, 0, 0.1)',
+              border: '1px solid rgba(255, 95, 0, 0.3)',
               borderRadius: '0.75rem',
               padding: '1rem',
               marginBottom: '1.5rem',
               fontSize: '0.875rem',
               color: 'var(--text-secondary)'
             }}>
-              <p style={{ margin: 0 }}>
-                🎁 <strong>Gasless Transaction</strong> - No ETH needed for gas fees!
+              <p style={{ margin: 0, color: 'var(--text-primary)' }}>
+                🎁 <strong style={{ color: 'var(--secondary)' }}>Gasless Transaction</strong> - No ETH needed for gas fees!
               </p>
               {smartAccount && (
                 <p style={{ margin: '0.5rem 0 0 0', fontSize: '0.75rem' }}>
-                  Using Smart Account: {smartAccount.slice(0, 10)}...{smartAccount.slice(-8)}
+                  Using Smart Account: <code style={{ color: 'var(--secondary)' }}>{smartAccount.slice(0, 10)}...{smartAccount.slice(-8)}</code>
                 </p>
               )}
             </div>
@@ -308,8 +343,8 @@ function SendTransactionModal({ isOpen, onClose, onSuccess }: SendTransactionMod
 
             {isPending && (
               <div style={{
-                background: 'rgba(59, 130, 246, 0.1)',
-                border: '1px solid rgba(59, 130, 246, 0.2)',
+                background: 'rgba(255, 149, 0, 0.1)',
+                border: '1px solid rgba(255, 149, 0, 0.3)',
                 borderRadius: '0.5rem',
                 padding: '0.75rem',
                 marginBottom: '1rem',
@@ -319,7 +354,7 @@ function SendTransactionModal({ isOpen, onClose, onSuccess }: SendTransactionMod
                 fontSize: '0.875rem',
                 color: 'var(--text-primary)'
               }}>
-                <Loader2 size={16} className="animate-spin" />
+                <Loader2 size={16} className="animate-spin" style={{ color: 'var(--secondary)' }} />
                 <span>Processing transaction...</span>
               </div>
             )}
@@ -356,7 +391,14 @@ function SendTransactionModal({ isOpen, onClose, onSuccess }: SendTransactionMod
             </div>
 
             <div className="send-info">
-              <p>💰 Currency: USDC only</p>
+              <p style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                <img
+                  src="https://cryptologos.cc/logos/usd-coin-usdc-logo.png"
+                  alt="USDC"
+                  style={{ width: 16, height: 16 }}
+                />
+                Currency: USDC only
+              </p>
               <p>🌐 Network: Base Sepolia (Testnet)</p>
               <p>⚠️ Please verify the recipient address carefully</p>
               <p>🔐 Powered by Coinbase Smart Account</p>
