@@ -119,3 +119,72 @@ body {
 ::-webkit-scrollbar-thumb:hover {
   background: var(--secondary);
 }
+
+/* Coinbase Sign In Modal Override - Ensure it's always on top */
+/* Very specific and aggressive z-index overrides */
+[class*="SignInModal"],
+[class*="SignIn_"],
+[class*="SignIn-"],
+[class*="signin"],
+[class*="Modal"],
+[class*="modal"],
+[data-testid*="modal"],
+#coinbase-wallet-modal,
+.coinbase-wallet-modal,
+div[id*="coinbase"],
+div[class*="coinbase"] {
+  z-index: 2147483647 !important;
+}
+
+[class*="Modal_overlay"],
+[class*="modal_overlay"],
+[class*="overlay"],
+[class*="Overlay"],
+div[class*="backdrop"],
+div[class*="Backdrop"] {
+  z-index: 2147483646 !important;
+}
+
+[class*="Modal_content"],
+[class*="modal_content"],
+[class*="modal-content"],
+[class*="Modal-content"] {
+  z-index: 2147483647 !important;
+}
+
+/* Coinbase OAuth Status Modal */
+[class*="OAuthStatusModal"],
+[class*="oauth"],
+[class*="OAuth"] {
+  z-index: 2147483647 !important;
+}
+
+/* General Coinbase modal backdrop and fixed positioned elements */
+body > div[style*="position: fixed"],
+body > div[style*="position:fixed"] {
+  z-index: 2147483646 !important;
+}
+
+/* Coinbase iframe container */
+iframe[src*="coinbase"],
+iframe[title*="coinbase"],
+iframe[name*="coinbase"] {
+  z-index: 2147483647 !important;
+}
+
+/* Any direct child of body with fixed positioning (likely modals) */
+body > div:has([class*="Modal"]),
+body > div:has([class*="SignIn"]),
+body > div:has([class*="modal"]),
+body > div:has([class*="signin"]) {
+  z-index: 2147483646 !important;
+}
+
+/* Nuclear option - any element containing "Coinbase" text or having CDP classes */
+[class*="cdp-"],
+[class*="CDP-"],
+[id*="cdp-"],
+[data-component*="SignIn"],
+[data-component*="Modal"] {
+  z-index: 2147483647 !important;
+}
