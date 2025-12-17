@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useCurrentUser, useSendUserOperation } from '@coinbase/cdp-hooks';
 import { encodeFunctionData } from 'viem';
-import { authService } from '../services/authService';
 import { Button } from './ui/Button';
 import { Loader2, Check, ExternalLink } from 'lucide-react';
 import './SendTransactionModal.css';
@@ -50,7 +49,7 @@ function SendTransactionModal({ isOpen, onClose, onSuccess }: SendTransactionMod
     }
   }, [isOpen]);
 
-  // Handle success - Log transaction details and record to backend
+  // Handle success - Log transaction details
   useEffect(() => {
     if (status === 'success' && data?.transactionHash) {
       const explorerUrl = `https://sepolia.basescan.org/tx/${data.transactionHash}`;
@@ -60,16 +59,6 @@ function SendTransactionModal({ isOpen, onClose, onSuccess }: SendTransactionMod
       console.log('[SEND-USDC] Transaction Hash:', data.transactionHash);
       console.log('[SEND-USDC] Explorer URL:', explorerUrl);
       console.log('[SEND-USDC] ================================');
-
-      // Record withdraw transaction to backend
-      authService.recordWithdrawTransaction(data.transactionHash)
-        .then(() => {
-          console.log('[SEND-USDC] Withdraw transaction recorded to backend');
-        })
-        .catch((err) => {
-          console.error('[SEND-USDC] Failed to record withdraw transaction:', err);
-          // Don't show error to user, it's not critical
-        });
 
       // Call success callback but don't auto-close
       if (onSuccess) onSuccess();
@@ -117,7 +106,7 @@ function SendTransactionModal({ isOpen, onClose, onSuccess }: SendTransactionMod
       console.log('[SEND-USDC] Transfer data:', transferData);
       console.log('[SEND-USDC] Amount in smallest unit:', amountInSmallestUnit.toString());
 
-      // Send user operation via Smart Account (gasless with CDP Paymaster)
+      // Send user operation via Smart Account (gasless with Pimlico Paymaster)
       await sendUserOperation({
         evmSmartAccount: smartAccount,
         network: 'base-sepolia',
@@ -128,7 +117,7 @@ function SendTransactionModal({ isOpen, onClose, onSuccess }: SendTransactionMod
             data: transferData,
           },
         ],
-        useCdpPaymaster: true, // Enable gasless transactions on Base
+        paymasterUrl: 'https://api.pimlico.io/v2/84532/rpc?apikey=pim_dbuqBbVuMDpM7C6yUUDgti',
       });
 
       console.log('[SEND-USDC] User operation submitted');

@@ -1,8 +1,8 @@
 import type { BackendAuthResponse } from '../types/auth';
 
 // const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://melee-dev-api.merket.io';
-// const API_BASE_URL = 'https://fsm-be.dc1.merket.io/api';
-const API_BASE_URL = 'http://localhost:3002/api';
+const API_BASE_URL = 'https://fsm-be.dc1.merket.io/api';
+// const API_BASE_URL = 'http://localhost:3002/api';
 class AuthService {
   async verifyCoinbaseToken(accessToken: string): Promise<BackendAuthResponse> {
     const response = await fetch(`${API_BASE_URL}/v1/coinbase/verify`, {
