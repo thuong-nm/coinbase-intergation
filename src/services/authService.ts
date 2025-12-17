@@ -170,6 +170,97 @@ class AuthService {
     console.log('[AUTH-SERVICE] Success response:', result);
     return result;
   }
+
+  /**
+   * Record a withdraw transaction to backend
+   */
+  async recordWithdrawTransaction(transactionHash: string): Promise<void> {
+    const backendToken = this.getBackendToken();
+    if (!backendToken) {
+      throw new Error('Backend token not found. Please authenticate first.');
+    }
+
+    console.log('[AUTH-SERVICE] Recording withdraw transaction:', transactionHash);
+
+    const response = await fetch(`${API_BASE_URL}/v1/transaction/withdraw`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${backendToken}`,
+      },
+      body: JSON.stringify({
+        transactionHash,
+      }),
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      console.error('[AUTH-SERVICE] Failed to record withdraw transaction:', errorData);
+      throw new Error(errorData.message || `Failed to record withdraw transaction: ${response.status}`);
+    }
+
+    console.log('[AUTH-SERVICE] Withdraw transaction recorded successfully');
+  }
+
+  /**
+   * Get transaction history from backend
+   */
+  async getTransactionHistory(params?: {
+    type?: 'deposit' | 'withdraw' | 'invest' | 'reward' | 'refund';
+    page?: number;
+    take?: number;
+    sortBy?: string;
+    order?: 'ASC' | 'DESC';
+  }): Promise<{
+    data: any[];
+    total: number;
+    page: number;
+    take: number;
+  }> {
+    const backendToken = this.getBackendToken();
+    if (!backendToken) {
+      throw new Error('Backend token not found. Please authenticate first.');
+    }
+
+    // Build query parameters
+    const queryParams = new URLSearchParams({
+      sortBy: params?.sortBy || 'createdAt',
+      order: params?.order || 'DESC',
+      page: String(params?.page || 1),
+      take: String(params?.take || 25),
+    });
+
+    if (params?.type) {
+      queryParams.append('type', params.type);
+    }
+
+    console.log('[AUTH-SERVICE] Fetching transaction history from backend');
+    console.log('[AUTH-SERVICE] Query params:', queryParams.toString());
+
+    const response = await fetch(`${API_BASE_URL}/v1/transaction/all?${queryParams.toString()}`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${backendToken}`,
+      },
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      console.error('[AUTH-SERVICE] Failed to fetch transaction history:', errorData);
+      throw new Error(errorData.message || `Failed to fetch transaction history: ${response.status}`);
+    }
+
+    const result = await response.json();
+    console.log('[AUTH-SERVICE] Transaction history fetched:', result);
+
+    return {
+      data: result.data || [],
+      total: result.total || 0,
+      page: result.page || 1,
+      take: result.take || 25,
+    };
+  }
 }
 
 export const authService = new AuthService();

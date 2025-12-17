@@ -6,6 +6,7 @@ import Deposit from './Deposit';
 import WalletBalance from './WalletBalance';
 import DepositModal from './DepositModal';
 import SendTransactionModal from './SendTransactionModal';
+import TransactionHistory from './TransactionHistory';
 import { Card } from './ui/Card';
 import { Button } from './ui/Button';
 import { Copy, Check, Loader2, AlertCircle } from 'lucide-react';
@@ -209,6 +210,8 @@ function WalletInfo() {
       </div>
 
       <Deposit />
+
+      <TransactionHistory network="base-sepolia" />
 
       {/* Sign out button at the bottom */}
       <div style={{ marginTop: '2rem', display: 'flex', justifyContent: 'center' }}>

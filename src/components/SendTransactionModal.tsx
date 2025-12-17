@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useCurrentUser, useSendUserOperation } from '@coinbase/cdp-hooks';
 import { encodeFunctionData } from 'viem';
+import { authService } from '../services/authService';
 import { Button } from './ui/Button';
 import { Loader2, Check, ExternalLink } from 'lucide-react';
 import './SendTransactionModal.css';
@@ -49,7 +50,7 @@ function SendTransactionModal({ isOpen, onClose, onSuccess }: SendTransactionMod
     }
   }, [isOpen]);
 
-  // Handle success - Log transaction details
+  // Handle success - Log transaction details and record to backend
   useEffect(() => {
     if (status === 'success' && data?.transactionHash) {
       const explorerUrl = `https://sepolia.basescan.org/tx/${data.transactionHash}`;
@@ -59,6 +60,16 @@ function SendTransactionModal({ isOpen, onClose, onSuccess }: SendTransactionMod
       console.log('[SEND-USDC] Transaction Hash:', data.transactionHash);
       console.log('[SEND-USDC] Explorer URL:', explorerUrl);
       console.log('[SEND-USDC] ================================');
+
+      // Record withdraw transaction to backend
+      authService.recordWithdrawTransaction(data.transactionHash)
+        .then(() => {
+          console.log('[SEND-USDC] Withdraw transaction recorded to backend');
+        })
+        .catch((err) => {
+          console.error('[SEND-USDC] Failed to record withdraw transaction:', err);
+          // Don't show error to user, it's not critical
+        });
 
       // Call success callback but don't auto-close
       if (onSuccess) onSuccess();
